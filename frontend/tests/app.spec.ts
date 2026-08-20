@@ -1,0 +1,86 @@
+import { expect, test } from '@playwright/test'
+
+test('customer workspace loads API data and opens detail', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/customers')
+  await expect(page.getByRole('heading', { name: '客户档案', level: 2 })).toBeVisible()
+  await expect(page.getByText('海港餐饮集团').first()).toBeVisible()
+  await expect(page.getByText('共 6 条')).toBeVisible()
+  await page.getByText('海港餐饮集团').first().click()
+  await expect(page.getByText('客户需求 (2)')).toBeVisible()
+  await page.getByRole('button', { name: '新增需求' }).click()
+  await expect(page.getByLabel('品种')).toBeVisible()
+  await expect(page.getByLabel('厂商/厂号')).toBeVisible()
+  await expect(page.getByLabel('进口/国产')).toBeVisible()
+  await expect(page.getByLabel('产品执行标准')).toBeVisible()
+})
+
+test('template and order editors expose all field groups', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/samples/templates')
+  await page.getByRole('button', { name: '新建模板' }).click()
+  await expect(page.getByText('产品基础信息', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('切割厚度')).toBeVisible()
+  await expect(page.getByLabel('是否含税')).toBeVisible()
+  await expect(page.getByLabel('配送费')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByText('新建样品模板')).not.toBeVisible()
+  await page.goto('/samples/orders')
+  await page.getByRole('button', { name: '新建订单' }).click()
+  await expect(page.getByLabel('配送时效')).toBeVisible()
+  await expect(page.getByLabel('结账账期')).toBeVisible()
+  await expect(page.getByLabel('数量单位')).toBeVisible()
+})
+
+test('template actions only offer copying and sample orders paste copied customer templates', async ({ page }) => {
+  await page.goto('/samples/templates')
+  await expect(page.getByRole('button', { name: '复制模板' }).first()).toBeVisible()
+  await expect(page.getByText('加入样品订单')).toHaveCount(0)
+  await expect(page.getByText('加入正式订单')).toHaveCount(0)
+  await page.getByRole('button', { name: '复制模板' }).first().click()
+
+  await page.goto('/samples/orders')
+  await page.getByRole('button', { name: '新建订单' }).click()
+  await page.getByLabel('所属客户').click()
+  await page.getByText('海港餐饮集团', { exact: true }).last().click()
+  await page.getByRole('button', { name: '粘贴模板' }).first().click()
+  await expect(page.getByLabel('产品名')).toHaveValue('M5 牛肩切片')
+})
+
+test('view actions use text buttons instead of eye icons', async ({ page }) => {
+  await page.goto('/customers')
+  await expect(page.getByRole('button', { name: /查\s*看/ }).first()).toBeVisible()
+  await expect(page.locator('[data-icon="eye"]')).toHaveCount(0)
+  await page.getByText('海港餐饮集团').first().click()
+  await page.getByText(/样品模板/).first().click()
+  await expect(page.getByRole('button', { name: /查\s*看/ }).first()).toBeVisible()
+})
+
+test('order product details are collapsed and named by product', async ({ page }) => {
+  await page.goto('/samples/orders')
+  await page.getByRole('button', { name: /查\s*看/ }).first().click()
+  const drawer = page.locator('.ant-drawer').filter({ has: page.locator('.order-product-collapse') })
+  await expect(drawer.locator('.ant-collapse-header').first()).toContainText(/\S+/)
+  await expect(drawer.getByText(/^产品明细 1$/)).toHaveCount(0)
+  await expect(drawer.getByText('产品基础信息', { exact: true })).not.toBeVisible()
+  await drawer.locator('.ant-collapse-header').first().click()
+  await expect(drawer.getByText('产品基础信息', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('产品规格', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('单份供价', { exact: true })).toBeVisible()
+})
+
+test('workflow excludes drafts and exposes configured actions', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.goto('/samples/workflow')
+  await expect(page.getByText('海港餐饮九月打样')).toBeVisible()
+  await expect(page.getByText('臻味火锅牛舌试样')).not.toBeVisible()
+  await expect(page.getByRole('button', { name: /下一流程/ })).toBeVisible()
+})
+
+test('mobile layout stays within viewport and keeps primary action visible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/customers')
+  await expect(page.getByRole('button', { name: '新增客户' })).toBeVisible()
+  const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
+  expect(bodyWidth).toBeLessThanOrEqual(390)
+})

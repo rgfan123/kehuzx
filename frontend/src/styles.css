@@ -1,0 +1,91 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: #1f2937;
+  background: #f3f6fa;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: #f3f6fa; }
+button, input, textarea { letter-spacing: 0; }
+.app-shell { min-height: 100vh; }
+.app-sider { border-right: 1px solid #dce3ea; position: sticky !important; top: 0; height: 100vh; overflow: auto; }
+.brand { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 22px; color: #315f8c; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #e8edf2; }
+.ant-layout-sider-collapsed .brand { padding: 0 27px; }
+.ant-layout-sider-collapsed .brand span { display: none; }
+.ant-menu-light { border-inline-end: 0 !important; padding: 12px 8px; }
+.topbar { height: 64px; padding: 0 20px; background: #fff; border-bottom: 1px solid #dce3ea; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20; }
+.topbar h4.ant-typography { margin: 1px 0 0; font-size: 17px; line-height: 22px; }
+.topbar .ant-breadcrumb { font-size: 11px; line-height: 16px; }
+.content-area { padding: 20px; min-width: 0; }
+.page-title { min-height: 54px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.page-title h2.ant-typography { margin: 0 0 3px; font-size: 22px; line-height: 30px; }
+.metric-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #fff; border: 1px solid #dce3ea; border-radius: 8px; margin-bottom: 16px; min-height: 88px; }
+.metric { min-width: 0; padding: 14px 18px; display: grid; grid-template-columns: 1fr auto; align-items: center; border-right: 1px solid #e8edf2; }
+.metric:last-child { border-right: 0; }
+.metric span { color: #667085; font-size: 13px; }
+.metric strong { grid-row: span 2; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: #243b53; }
+.metric small { color: #98a2b3; }
+.workspace-panel, .summary-panel { background: #fff; border: 1px solid #dce3ea; border-radius: 8px; overflow: hidden; }
+.summary-panel { padding: 18px; margin-bottom: 16px; }
+.filter-bar { min-height: 64px; padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; border-bottom: 1px solid #e8edf2; background: #fff; }
+.filter-bar .ant-input-affix-wrapper, .filter-bar .ant-input-search { width: 360px; max-width: 100%; }
+.filter-bar .ant-select { min-width: 160px; }
+.workspace-panel .ant-table-wrapper { width: 100%; }
+.workspace-panel .ant-table-cell { vertical-align: middle; }
+.inline-link { padding: 0; height: auto; font-weight: 600; text-align: left; }
+.code-text { font-size: 12px; font-variant-numeric: tabular-nums; color: #667085; }
+.state-block { min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #667085; }
+.detail-tabs .ant-tabs-nav { padding: 0 16px; margin-bottom: 0; }
+.detail-tabs .ant-tabs-content-holder { padding: 0; }
+.tab-actions { padding: 12px 16px; border-bottom: 1px solid #e8edf2; display: flex; justify-content: flex-end; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.field-section { margin-bottom: 8px; }
+.field-section .ant-divider { margin: 12px 0 18px; font-weight: 600; color: #344054; }
+.product-editor { padding: 16px; border-bottom: 1px solid #e8edf2; background: #fff; }
+.product-editor:last-child { border-bottom: 0; }
+.product-editor-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.order-product-section { margin-top: 22px; }
+.order-product-section > .ant-divider { margin-bottom: 12px; }
+.order-product-collapse { border-color: #dce3ea; background: #fff; }
+.order-product-collapse .ant-collapse-header { min-height: 52px; align-items: center !important; }
+.order-product-label { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.order-product-label strong { color: #243b53; overflow-wrap: anywhere; }
+.order-product-label span { color: #667085; font-size: 12px; text-align: right; }
+.empty-product-details { margin-top: 20px; padding: 20px; color: #667085; text-align: center; border: 1px dashed #dce3ea; }
+.full-width { width: 100%; }
+.flow-tabs { padding: 10px; display: flex; gap: 8px; overflow-x: auto; background: #fff; border: 1px solid #dce3ea; border-radius: 8px; margin-bottom: 16px; }
+.flow-tabs button { flex: 0 0 auto; }
+.items-editor { border: 1px solid #dce3ea; border-radius: 8px; margin-bottom: 18px; overflow: hidden; }
+.section-heading { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: #f6f8fa; border-bottom: 1px solid #e8edf2; }
+.item-row { display: grid; grid-template-columns: 1.5fr 1fr .7fr .6fr 1fr auto; align-items: end; gap: 10px; padding: 14px; border-bottom: 1px solid #e8edf2; }
+.item-row:last-child { border-bottom: 0; }
+.item-row .ant-form-item { margin-bottom: 0; min-width: 0; }
+.detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.order-steps { margin-bottom: 28px; overflow-x: auto; }
+
+@media (max-width: 1000px) {
+  .metric-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric:nth-child(2) { border-right: 0; }
+  .metric:nth-child(-n+2) { border-bottom: 1px solid #e8edf2; }
+  .item-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+  .topbar { padding: 0 12px; }
+  .operator-name { display: none; }
+  .content-area { padding: 14px 12px; }
+  .page-title { align-items: stretch; flex-direction: column; }
+  .page-title > .ant-btn { width: 100%; }
+  .metric { padding: 11px 12px; }
+  .metric strong { font-size: 22px; }
+  .filter-bar { padding: 12px; }
+  .filter-bar > *, .filter-bar .ant-select, .filter-bar .ant-picker { width: 100% !important; }
+  .form-grid, .field-grid, .item-row { grid-template-columns: 1fr; }
+  .item-row .ant-form-item { margin-bottom: 10px; }
+  .ant-drawer-content-wrapper { max-width: 100vw; }
+  .detail-header { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .order-product-label { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .order-product-label span { text-align: left; }
+}

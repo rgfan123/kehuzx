@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/components/businessfields.tsx","./src/components/common.tsx","./src/pages/customerdetailpage.tsx","./src/pages/customerspage.tsx","./src/pages/orderspage.tsx","./src/pages/supplierspage.tsx","./src/pages/templatespage.tsx"],"version":"5.8.3"}
