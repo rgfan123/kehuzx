@@ -135,9 +135,14 @@ export default function TemplatesPage() {
     }
   }
 
-  const copyTemplate = (template: Template) => {
-    sessionStorage.setItem('copied-sample-template', JSON.stringify(template))
-    message.success(`模板"${template.name}"已复制到剪贴板`)
+  const copyTemplate = async (template: Template) => {
+    try {
+      await api.duplicateTemplate(template.id)
+      message.success(`模板"${template.name}"已复制`)
+      await load()
+    } catch (e) {
+      message.error((e as Error).message)
+    }
   }
 
   const columns = [

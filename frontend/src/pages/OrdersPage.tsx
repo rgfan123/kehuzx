@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  App, Button, DatePicker, Descriptions, Divider, Drawer, Form, Input, InputNumber, message,
+  App, Button, Checkbox, DatePicker, Descriptions, Divider, Drawer, Form, Input, InputNumber, message,
   Modal, Select, Space, Steps, Table, Tag,
 } from 'antd'
 import dayjs from 'dayjs'
@@ -219,6 +219,11 @@ export default function OrdersPage({ type, workflow }: { type: 'sample' | 'forma
   const [editingProductIndex, setEditingProductIndex] = useState<number | null>(null)
   const [productItems, setProductItems] = useState<Record<string, unknown>[]>([])
   const [productInitialValues, setProductInitialValues] = useState<Record<string, unknown> | null>(null)
+
+  // Export template state
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportSelected, setExportSelected] = useState<number[]>([])
+  const [exporting, setExporting] = useState(false)
 
   const reqRef = useRef(0)
 
@@ -492,6 +497,46 @@ export default function OrdersPage({ type, workflow }: { type: 'sample' | 'forma
     } catch { /* cancelled */ }
   }
 
+  // ── Export templates from order items ──
+  const openExportModal = () => {
+    if (!detail) return
+    setExportSelected([])
+    setExportModalOpen(true)
+  }
+
+  const handleExportTemplates = async () => {
+    if (!detail || exportSelected.length === 0) return
+    setExporting(true)
+    try {
+      const selectedItems = exportSelected.map((i) => detail.items[i])
+      // Create templates one by one
+      let successCount = 0
+      for (const item of selectedItems) {
+        const templateData = {
+          name: item.product_name || '未命名产品',
+          customer_id: detail.customer_id,
+          status: 'UNSUPPLIED',
+          length_unit: 'cm',
+          width_unit: 'cm',
+          thickness_unit: 'mm',
+          price_currency: '元',
+          ...Object.fromEntries(
+            PRODUCT_KEYS.map((key) => [key, (item as Record<string, unknown>)[key] ?? undefined])
+          ),
+        }
+        await api.createTemplate(templateData)
+        successCount++
+      }
+      message.success(`成功导出 ${successCount} 个模板`)
+      setExportModalOpen(false)
+      // If on templates page, could refresh, but we're on orders page
+    } catch (e) {
+      message.error((e as Error).message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   // ── Table columns ──
   const columns = [
     {
@@ -724,6 +769,63 @@ export default function OrdersPage({ type, workflow }: { type: 'sample' | 'forma
         initialValues={productInitialValues}
       />
 
+      {/* ── Export Template Modal ─ */}
+      <Modal
+        title="导出产品为模板"
+        open={exportModalOpen}
+        onCancel={() => setExportModalOpen(false)}
+        onOk={handleExportTemplates}
+        okText="确认导出"
+        cancelText="取消"
+        okButtonProps={{ loading: exporting, disabled: exportSelected.length === 0 }}
+        width={600}
+        styles={{ body: { maxHeight: '60vh', overflowY: 'auto' } }}
+      >
+        <p style={{ marginBottom: 12, color: '#666' }}>
+          请选择要导出为模板的产品明细（已选 {exportSelected.length} 项）：
+        </p>
+        {detail?.items.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>
+            该订单暂无产品明细
+          </div>
+        ) : (
+          <div style={{ border: '1px solid #dce3ea', borderRadius: 8, overflow: 'hidden' }}>
+            {detail?.items.map((item, index) => (
+              <label
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '10px 12px',
+                  borderBottom: index < (detail?.items.length || 0) - 1 ? '1px solid #e8edf2' : 'none',
+                  background: index % 2 === 0 ? '#fff' : '#fafbfc',
+                  cursor: 'pointer',
+                }}
+              >
+                <Checkbox
+                  checked={exportSelected.includes(index)}
+                  onChange={(e) => {
+                    setExportSelected((prev) =>
+                      e.target.checked
+                        ? [...prev, index]
+                        : prev.filter((i) => i !== index)
+                    )
+                  }}
+                  style={{ marginRight: 12 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>{item.product_name || '未命名'}</div>
+                  <div style={{ fontSize: 12, color: '#999' }}>
+                    {item.product_category || ''} {item.processing_method || ''}
+                    {item.unit_price ? ` · ¥${item.unit_price}/${item.pricing_unit || '份'}` : ''}
+                  </div>
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+      </Modal>
+
       {/* ── Order Detail Drawer ── */}
       <Drawer
         title={detail?.name}
@@ -732,7 +834,10 @@ export default function OrdersPage({ type, workflow }: { type: 'sample' | 'forma
         width={800}
         extra={
           detail ? (
-            <Button onClick={() => { setDetail(undefined); openEditor(detail) }}>编辑</Button>
+            <Space>
+              <Button onClick={openExportModal}>导出模板</Button>
+              <Button onClick={() => { setDetail(undefined); openEditor(detail) }}>编辑</Button>
+            </Space>
           ) : undefined
         }
       >

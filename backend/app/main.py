@@ -479,7 +479,16 @@ def duplicate_template(
     data = {column.name: getattr(source, column.name)
             for column in models.SampleTemplate.__table__.columns
             if column.name not in {"id", "code", "created_at", "updated_at", "deleted_at"}}
-    data["name"] = f"{source.name}（复制）"
+    # 生成不重复的副本名称：原名 + 递增数字
+    base_name = source.name
+    new_name = f"{base_name}1"
+    counter = 2
+    while db.scalar(select(models.SampleTemplate).where(
+            models.SampleTemplate.name == new_name,
+            models.SampleTemplate.deleted_at.is_(None))):
+        new_name = f"{base_name}{counter}"
+        counter += 1
+    data["name"] = new_name
     copy = models.SampleTemplate(code=business_code("MB", db), **data)
     db.add(copy)
     db.flush()
