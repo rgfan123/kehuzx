@@ -90,3 +90,41 @@ export const ENTITY_TEXT: Record<string, string> = {
   customer: '客户', demand: '需求', template: '模板',
   supplier: '供应商', order: '订单', user: '用户',
 }
+
+export interface DashboardData {
+  metrics: {
+    customers: number
+    in_progress: number
+    suspended: number
+    drafts: number
+    monthly_amount: string
+  }
+  workflow_summary: {
+    key: string
+    label: string
+    sample_count: number
+    formal_count: number
+  }[]
+  suspended_orders: {
+    id: string
+    code: string
+    name: string
+    type: 'sample' | 'formal'
+    reason: string
+  }[]
+  draft_orders: {
+    id: string
+    code: string
+    name: string
+    type: 'sample' | 'formal'
+  }[]
+  recent_logs: {
+    id: string
+    action: string
+    entity_type: string
+    entity_name: string
+    record_code: string
+    operator: string
+    created_at: string
+  }[]
+}

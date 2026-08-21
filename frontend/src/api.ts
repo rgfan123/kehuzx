@@ -1,4 +1,4 @@
-import type { Customer, Demand, LoginResponse, OperationLog, Order, Page, Supplier, Template, User } from './types'
+import type { Customer, DashboardData, Demand, LoginResponse, OperationLog, Order, Page, Supplier, Template, User } from './types'
 
 const TOKEN_KEY = 'khzx-token'
 const USER_KEY = 'khzx-user'
@@ -45,6 +45,9 @@ const qs = (params: Record<string, string | number | undefined>) => {
 }
 
 export const api = {
+  // Dashboard
+  dashboard: () => request<DashboardData>('/api/dashboard'),
+
   // Auth
   login: (username: string, password: string) =>
     request<LoginResponse>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),

@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import date, datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -98,6 +99,158 @@ def hard_delete_order(db: Session, order_type: str, order) -> None:
 @app.get("/api/health")
 def health():
     return {"status": "ok", "app": settings.app_name}
+
+
+# ── Dashboard ─────────────────────────────────────────────────────────
+
+@app.get("/api/dashboard")
+def dashboard(
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(get_current_user),
+):
+    today = date.today()
+    month_start = today.replace(day=1)
+
+    # Metrics
+    customer_count = db.scalar(
+        select(func.count(models.Customer.id)).where(active(models.Customer))
+    ) or 0
+
+    # In-progress orders: submitted, not suspended, across both types
+    def _count_active(model):
+        return db.scalar(
+            select(func.count(model.id)).where(
+                model.is_submitted.is_(True),
+                model.is_suspended.is_(False),
+            )
+        ) or 0
+
+    active_sample = _count_active(models.SampleOrder)
+    active_formal = _count_active(models.FormalOrder)
+    in_progress = active_sample + active_formal
+
+    # Suspended orders
+    def _count_suspended(model):
+        return db.scalar(
+            select(func.count(model.id)).where(model.is_suspended.is_(True))
+        ) or 0
+
+    suspended_sample = _count_suspended(models.SampleOrder)
+    suspended_formal = _count_suspended(models.FormalOrder)
+    suspended_total = suspended_sample + suspended_formal
+
+    # Draft orders
+    def _count_drafts(model):
+        return db.scalar(
+            select(func.count(model.id)).where(model.is_submitted.is_(False))
+        ) or 0
+
+    draft_sample = _count_drafts(models.SampleOrder)
+    draft_formal = _count_drafts(models.FormalOrder)
+    drafts_total = draft_sample + draft_formal
+
+    # Monthly delivery amount (orders with delivery_date in current month)
+    def _monthly_amount(model):
+        return db.scalar(
+            select(func.coalesce(func.sum(model.settlement_amount), 0)).where(
+                model.delivery_date >= month_start,
+                model.delivery_date <= today,
+            )
+        ) or 0
+
+    monthly_amount = _monthly_amount(models.SampleOrder) + _monthly_amount(models.FormalOrder)
+
+    # Workflow summary: count per status for each type
+    from app.enums import SAMPLE_FLOW_TEXT, FORMAL_FLOW_TEXT
+
+    workflow_summary = []
+    for key, label in SAMPLE_FLOW_TEXT.items():
+        cnt = db.scalar(
+            select(func.count(models.SampleOrder.id)).where(
+                models.SampleOrder.workflow_status == key,
+                models.SampleOrder.is_suspended.is_(False),
+            )
+        ) or 0
+        workflow_summary.append({"key": key, "label": label, "sample_count": cnt, "formal_count": 0})
+
+    for key, label in FORMAL_FLOW_TEXT.items():
+        cnt = db.scalar(
+            select(func.count(models.FormalOrder.id)).where(
+                models.FormalOrder.workflow_status == key,
+                models.FormalOrder.is_suspended.is_(False),
+            )
+        ) or 0
+        # If same key exists (FACTORY_COMMUNICATION), add to existing entry
+        existing = next((w for w in workflow_summary if w["key"] == key), None)
+        if existing:
+            existing["formal_count"] = cnt
+        else:
+            workflow_summary.append({"key": key, "label": label, "sample_count": 0, "formal_count": cnt})
+
+    # Suspended orders (top 5)
+    suspended_orders = []
+    for o in db.scalars(
+        select(models.SampleOrder).where(models.SampleOrder.is_suspended.is_(True))
+        .order_by(models.SampleOrder.updated_at.desc()).limit(5)
+    ).all():
+        suspended_orders.append({
+            "id": o.id, "code": o.code, "name": o.name,
+            "type": "sample", "reason": o.suspended_reason or "",
+        })
+    for o in db.scalars(
+        select(models.FormalOrder).where(models.FormalOrder.is_suspended.is_(True))
+        .order_by(models.FormalOrder.updated_at.desc()).limit(5)
+    ).all():
+        suspended_orders.append({
+            "id": o.id, "code": o.code, "name": o.name,
+            "type": "formal", "reason": o.suspended_reason or "",
+        })
+
+    # Draft orders (top 5)
+    draft_orders = []
+    for o in db.scalars(
+        select(models.SampleOrder).where(models.SampleOrder.is_submitted.is_(False))
+        .order_by(models.SampleOrder.created_at.desc()).limit(5)
+    ).all():
+        draft_orders.append({
+            "id": o.id, "code": o.code, "name": o.name, "type": "sample",
+        })
+    for o in db.scalars(
+        select(models.FormalOrder).where(models.FormalOrder.is_submitted.is_(False))
+        .order_by(models.FormalOrder.created_at.desc()).limit(5)
+    ).all():
+        draft_orders.append({
+            "id": o.id, "code": o.code, "name": o.name, "type": "formal",
+        })
+
+    # Recent logs (top 10)
+    recent_logs = []
+    for log in db.scalars(
+        select(models.OperationLog).order_by(models.OperationLog.created_at.desc()).limit(10)
+    ).all():
+        recent_logs.append({
+            "id": log.id,
+            "action": log.action,
+            "entity_type": log.entity_type,
+            "entity_name": log.entity_name or "",
+            "record_code": log.record_code or "",
+            "operator": log.operator,
+            "created_at": log.created_at.isoformat(),
+        })
+
+    return {
+        "metrics": {
+            "customers": customer_count,
+            "in_progress": in_progress,
+            "suspended": suspended_total,
+            "drafts": drafts_total,
+            "monthly_amount": str(monthly_amount),
+        },
+        "workflow_summary": workflow_summary,
+        "suspended_orders": suspended_orders,
+        "draft_orders": draft_orders,
+        "recent_logs": recent_logs,
+    }
 
 
 # ── Operation Logs ────────────────────────────────────────────────────

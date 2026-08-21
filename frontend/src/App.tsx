@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Avatar, Breadcrumb, Button, Drawer, Grid, Layout, Menu, Space, Tooltip, Typography } from 'antd'
 import {
-  ApartmentOutlined, FileDoneOutlined, FileSearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+  ApartmentOutlined, DashboardOutlined, FileDoneOutlined, FileSearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
   ProfileOutlined, ShopOutlined, TeamOutlined, UserOutlined, LogoutOutlined,
 } from '@ant-design/icons'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { clearAuth, getUser, isLoggedIn } from './api'
 import type { User } from './types'
 import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
 import CustomersPage from './pages/CustomersPage'
 import CustomerDetailPage from './pages/CustomerDetailPage'
 import TemplatesPage from './pages/TemplatesPage'
@@ -18,6 +19,7 @@ import LogsPage from './pages/LogsPage'
 const { Header, Sider, Content } = Layout
 
 const routeTitles: Record<string, string> = {
+  '/dashboard': '工作台',
   '/customers': '客户档案', '/samples/templates': '样品模板', '/samples/orders': '样品订单',
   '/samples/workflow': '样品订单流程', '/orders': '正式订单', '/orders/workflow': '正式订单流程',
   '/suppliers': '供应商档案', '/logs': '操作日志',
@@ -47,11 +49,12 @@ function Shell() {
 
   const selectedKey = useMemo(() => {
     const keys = Object.keys(routeTitles).sort((a, b) => b.length - a.length)
-    return keys.find((key) => location.pathname.startsWith(key)) ?? '/customers'
+    return keys.find((key) => location.pathname.startsWith(key)) ?? '/dashboard'
   }, [location.pathname])
   const title = location.pathname.startsWith('/customers/') ? '客户详情' : routeTitles[selectedKey]
 
   const items = [
+    { key: '/dashboard', icon: <DashboardOutlined />, label: '工作台' },
     { key: '/customers', icon: <TeamOutlined />, label: '客户' },
     { key: 'samples', icon: <ProfileOutlined />, label: '样品', children: [
       { key: '/samples/templates', label: '样品模板' }, { key: '/samples/orders', label: '样品订单' },
@@ -96,6 +99,7 @@ function Shell() {
       <Content className="content-area">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<AuthGuard><DashboardPage /></AuthGuard>} />
           <Route path="/customers" element={<AuthGuard><CustomersPage /></AuthGuard>} />
           <Route path="/customers/:id" element={<AuthGuard><CustomerDetailPage /></AuthGuard>} />
           <Route path="/samples/templates" element={<AuthGuard><TemplatesPage /></AuthGuard>} />
@@ -105,7 +109,7 @@ function Shell() {
           <Route path="/orders/workflow" element={<AuthGuard><OrdersPage type="formal" workflow /></AuthGuard>} />
           <Route path="/suppliers" element={<AuthGuard><SuppliersPage /></AuthGuard>} />
           <Route path="/logs" element={<AuthGuard><LogsPage /></AuthGuard>} />
-          <Route path="*" element={<Navigate to="/customers" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Content>
     </Layout>
